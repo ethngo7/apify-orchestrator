@@ -56,7 +56,7 @@ A single environment variable swap (`MOCK_MODE=false`) activates live mode on Su
 - [x] FILE 1: `backend/models.py`
 - [x] FILE 2: `backend/apify_client.py`
 - [x] FILE 3: `backend/actor_registry.py`
-- [ ] FILE 4: `backend/agent.py`
+- [x] FILE 4: `backend/agent.py`
 - [ ] FILE 5: `backend/main.py`
 - [ ] FILE 6: `frontend/index.html`
 - [ ] FILE 7: `.env`
