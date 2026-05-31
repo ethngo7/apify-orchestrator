@@ -80,6 +80,43 @@ A single environment variable swap (`MOCK_MODE=false`) activates live mode on Su
 
 ---
 
+## V2 Roadmap
+
+### Feature: Per-User Actor Personalization
+
+**Description:**
+Track which actors each user runs and surface their most-used actors as personalized fast-path options in Phase 1 discovery, shown above the default 15 hardcoded actors.
+
+**Architecture notes:**
+
+- **Database** — lightweight store (Supabase free tier or SQLite) with a `actor_runs` table:
+  ```
+  user_id       TEXT    -- derived from IP or session token
+  actor_id      TEXT    -- e.g. "trudax~reddit-scraper-lite"
+  query_text    TEXT    -- original user query
+  run_timestamp INTEGER -- unix epoch
+  success       BOOLEAN -- whether the run returned SUCCEEDED status
+  ```
+
+- **New backend endpoint** — `GET /user/actors`
+  - Reads `user_id` from request header / session
+  - Returns top 5 most-used `actor_id` strings for that user (ordered by run count desc)
+  - Falls back to empty list for new users
+
+- **`actor_registry.py`** — add `get_user_fast_path(user_id: str) -> list[str]`
+  - Queries DB, returns personalized actor list
+  - Called by the agent or directly by the new endpoint
+
+- **Phase 1 UI (`ActorDiscoveryPanel`)** — if user history exists, prepend a
+  `"YOUR FREQUENT ACTORS"` section (same card style) above `"RECOMMENDED ACTORS"`;
+  actors sourced from `GET /user/actors` response
+
+**Complexity estimate:** Medium (1–2 days)
+
+**Dependencies:** Supabase free tier or SQLite, user session handling
+
+---
+
 ## 3 Demo Queries + Actor Chains
 
 ### Query 1 — AI Startups SF

@@ -2,7 +2,7 @@
 
 ## 🚀 Live Demo
 
-**[https://YOUR-RAILWAY-URL.up.railway.app](https://YOUR-RAILWAY-URL.up.railway.app)**
+**[https://apify-orchestrator.up.railway.app](https://apify-orchestrator.up.railway.app)**
 
 > Running in MOCK MODE — no Apify credits consumed. Try the 3 demo queries below.
 
