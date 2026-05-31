@@ -58,7 +58,7 @@ A single environment variable swap (`MOCK_MODE=false`) activates live mode on Su
 - [x] FILE 3: `backend/actor_registry.py`
 - [x] FILE 4: `backend/agent.py`
 - [x] FILE 5: `backend/main.py`
-- [x] FILE 6: `frontend/index.html`
+- [x] FILE 6: `frontend/index.html` *(rewritten: marked.js markdown, pipeline step cards, animated loader, MOCK MODE banner, Vercel/Linear aesthetic)*
 - [x] FILE 7: `.env`
 - [x] FILE 8: `requirements.txt`
 - [x] FILE 9: `README.md`
