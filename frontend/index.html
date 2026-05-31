@@ -70,6 +70,7 @@
       background: #18181b;
       border: 1px solid #27272a;
       border-radius: 12px;
+      overflow: visible;
       transition: border-color 0.15s;
     }
     .card:hover { border-color: #3f3f46; }
@@ -467,14 +468,14 @@
                   <div className="space-y-4">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-widest text-zinc-600 mb-2">Raw Data Output</p>
-                      <div className="card px-8 py-7">
+                      <div className="card px-8 py-7" style={{ overflow: "visible" }}>
                         <MarkdownBlock content={parts[0]} />
                       </div>
                     </div>
                     {parts[1] && (
                       <div>
                         <p className="text-xs font-semibold uppercase tracking-widest text-zinc-600 mb-2">Agent Insights</p>
-                        <div className="card px-8 py-7" style={{ borderLeft: "2px solid #6366f1" }}>
+                        <div className="card px-8 py-7" style={{ borderLeft: "2px solid #6366f1", overflow: "visible" }}>
                           <MarkdownBlock content={parts[1]} />
                         </div>
                       </div>
@@ -699,7 +700,7 @@
             )}
 
             {/* Results */}
-            {result && <ResultPanel data={result} />}
+            {result && <ResultPanel key={result.query} data={result} />}
 
           </div>
         </div>
