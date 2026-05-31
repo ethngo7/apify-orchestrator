@@ -62,6 +62,11 @@ A single environment variable swap (`MOCK_MODE=false`) activates live mode on Su
 - [x] FILE 7: `.env`
 - [x] FILE 8: `requirements.txt`
 - [x] FILE 9: `README.md`
+- [x] UX REDESIGN: Two-phase actor discovery + deferred AI summary *(frontend-only; no backend changes)*
+  - **Phase 1** — on submit, `predictActorChain()` runs locally (JS port of Tier-1 backend classifier); `ActorDiscoveryPanel` shows one card per predicted actor (title, platform, description, ~N items). Two buttons: "Run these actors for me" → Phase 2; "I'll use these myself ↗" → opens `https://apify.com/[username]/[actor-name]` in new tabs
+  - **Phase 2** — `/orchestrate` runs as before; execution pipeline shows immediately; synthesized output hidden behind "Generate AI Summary ▼" button
+  - Embedded `ACTOR_REGISTRY_FRONTEND`, `DEMO_QUERY_CHAINS_JS`, `PLATFORM_ACTOR_MAP_JS` as frontend constants (exact mirrors of `actor_registry.py` Tier-1 data)
+  - Phase 1 predicted actors verified to match Phase 2 execution pipeline for all 3 demo queries
 
 ---
 
