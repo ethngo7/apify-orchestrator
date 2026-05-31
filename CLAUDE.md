@@ -18,7 +18,7 @@ A single environment variable swap (`MOCK_MODE=false`) activates live mode on Su
 | `MOCK_MODE` | `true` until told otherwise |
 | `MAX_ITERATIONS` | 5 (agent loop hard cap) |
 | `MAX_TOKENS_PER_RUN` | 10,000 (total across all Claude calls per orchestration run) |
-| Claude model | `claude-sonnet-4-20250514` — no substitutions |
+| Claude model | `claude-sonnet-4-6` — no substitutions |
 | Build cadence | One file at a time — stop and wait for confirmation before the next file |
 | Syntax check | `python -m py_compile` after every Python file; report errors before confirming |
 | Function comments | Every function must have an inline example: real input → expected output |

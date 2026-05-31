@@ -24,7 +24,7 @@ from backend.models import (
 
 # ── Constants ──────────────────────────────────────────────────────────────────
 
-MODEL = "claude-sonnet-4-20250514"
+MODEL = "claude-sonnet-4-6"
 MOCK_MODE: bool = os.getenv("MOCK_MODE", "true").lower() == "true"
 
 # ── Prompts ────────────────────────────────────────────────────────────────────
