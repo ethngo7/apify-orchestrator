@@ -5,13 +5,8 @@ import time
 import uuid
 from typing import Optional
 
-# Conditional import — apify-client may not be installed when MOCK_MODE=true
-try:
-    from apify_client import ApifyClient as _ApifySDKClient
-    _SDK_AVAILABLE = True
-except ImportError:
-    _ApifySDKClient = None  # type: ignore
-    _SDK_AVAILABLE = False
+# apify-client is imported lazily inside ApifyClientWrapper.__init__ so that
+# mock-mode startup never fails even if the package has an import-time issue.
 
 from backend.models import ActorRunResult, ActorRunStatus
 
@@ -804,11 +799,15 @@ class ApifyClientWrapper:
         self.mock_mode = MOCK_MODE
         self._sdk_client = None
         if not self.mock_mode:
-            if not _SDK_AVAILABLE:
-                raise RuntimeError("apify-client is not installed. Run: pip install apify-client")
             if not APIFY_TOKEN:
                 raise RuntimeError("APIFY_TOKEN is not set. Add it to your .env file.")
-            self._sdk_client = _ApifySDKClient(token=APIFY_TOKEN)
+            try:
+                from apify_client import ApifyClient as _ApifySDKClient
+                self._sdk_client = _ApifySDKClient(token=APIFY_TOKEN)
+            except ImportError as exc:
+                raise RuntimeError(
+                    "apify-client is not installed. Run: pip install apify-client"
+                ) from exc
 
     # ── Store search ──────────────────────────────────────────────────────────
 
