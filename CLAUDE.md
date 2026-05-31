@@ -67,6 +67,16 @@ A single environment variable swap (`MOCK_MODE=false`) activates live mode on Su
   - **Phase 2** — `/orchestrate` runs as before; execution pipeline shows immediately; synthesized output hidden behind "Generate AI Summary ▼" button
   - Embedded `ACTOR_REGISTRY_FRONTEND`, `DEMO_QUERY_CHAINS_JS`, `PLATFORM_ACTOR_MAP_JS` as frontend constants (exact mirrors of `actor_registry.py` Tier-1 data)
   - Phase 1 predicted actors verified to match Phase 2 execution pipeline for all 3 demo queries
+- [x] RAILWAY DEPLOYMENT
+  - `Procfile` added: `uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}`
+  - `GET /` route added to `main.py` via `FileResponse("frontend/index.html")`
+  - `API_BASE` changed from `"http://localhost:8000"` to `""` (relative paths) in `index.html`
+- [x] BUG FIXES (today's session)
+  - `agent.py` — Tier-1 plan no longer counts as an iteration (Reddit step was skipped in ai_startups_sf chain)
+  - `agent.py` — Claude model ID updated from `claude-sonnet-4-20250514` (retired) → `claude-sonnet-4-6`
+  - `apify_client.py` — lazy-import `apify_client` inside `__init__` only when `MOCK_MODE=false`; removed module-level `_SDK_AVAILABLE` flag that blocked Railway startup
+  - `requirements.txt` — bumped `apify-client` to `1.9.2`, pinned `apify-shared==1.1.2`
+  - `index.html` — analysis cards given explicit `overflow: visible`; `ResultPanel` keyed by `result.query` to reset `showSummary` state between queries
 
 ---
 

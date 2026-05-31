@@ -1,5 +1,28 @@
 # Apify Actor Orchestrator
 
+## 🚀 Live Demo
+
+**[https://YOUR-RAILWAY-URL.up.railway.app](https://YOUR-RAILWAY-URL.up.railway.app)**
+
+> Running in MOCK MODE — no Apify credits consumed. Try the 3 demo queries below.
+
+---
+
+## Try These Demo Queries
+
+Paste any of these into the input box and click **Run Agent**:
+
+1. **AI Startups SF**
+   > "Find me the top AI startups in SF, their founders' LinkedIn profiles, and what people are saying about them on Reddit"
+
+2. **OpenAI Sentiment**
+   > "What are people saying about OpenAI on Reddit and Twitter this week?"
+
+3. **Fintech Lead Gen NYC**
+   > "Build me a lead list of fintech companies in NYC — find them on Google Maps, then find their decision makers on LinkedIn"
+
+---
+
 An AI agent that accepts natural language queries, searches Apify's marketplace of 33,000+ Actors, selects the right Actor(s), chains them when needed, executes them, and returns structured data with a synthesized prose summary.
 
 Runs in **MOCK MODE** by default — no Apify credits consumed during development.
