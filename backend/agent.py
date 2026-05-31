@@ -191,9 +191,7 @@ class OrchestratorAgent:
         # Example output: ExecutionPlan(steps=[reddit_step, twitter_step],
         #                               reasoning="Matched platforms to registered actors")
         """
-        self.iterations_used += 1
-
-        # Tier 1: registry or demo chain
+        # Tier 1: registry or demo chain — no Claude call, no iteration consumed
         chain = get_chain_for_query(intent.raw_query, intent)
         if chain:
             demo_key = classify_demo_query(intent.raw_query)
@@ -214,6 +212,7 @@ class OrchestratorAgent:
             return ExecutionPlan(steps=steps, reasoning=reasoning)
 
         # Tier 2: Claude selects from registry + may propose dynamic actors
+        self.iterations_used += 1
         max_steps = self.max_iterations - 2  # reserve 1 for parse, 1 for synthesize
         registry_summary = "\n".join(
             f"- {aid}: {info['description']} (platforms: {info['platforms']})"
