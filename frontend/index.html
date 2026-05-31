@@ -133,6 +133,47 @@
       READY:     { cls: "bg-blue-900/40 text-blue-300 border border-blue-800/60",           dot: "bg-blue-400"    },
     };
 
+    // ── Actor registry (frontend copy for Phase 1 prediction) ────────────────────
+
+    const ACTOR_REGISTRY_FRONTEND = {
+      "apify~google-search-scraper":    { title: "Google Search Scraper",        description: "Crawls Google SERPs — organic results, ads, People Also Ask.", platforms: ["Google", "SERP"],   estItems: 10 },
+      "apify~website-content-crawler":  { title: "Website Content Crawler",      description: "Deep-crawls sites and converts HTML to Markdown for LLM pipelines.", platforms: ["Web"],         estItems: 10 },
+      "apify~web-scraper":              { title: "Web Scraper",                   description: "Universal scraper: runs full Chrome with a custom JS pageFunction.", platforms: ["Web"],         estItems: 10 },
+      "apify~cheerio-scraper":          { title: "Cheerio Scraper",               description: "Fast raw-HTTP scraper using Cheerio for static HTML pages.",         platforms: ["Web"],         estItems: 20 },
+      "trudax~reddit-scraper-lite":     { title: "Reddit Scraper Lite",           description: "Crawls Reddit posts, comments, and communities — no login required.", platforms: ["Reddit"],     estItems: 50 },
+      "apidojo~tweet-scraper":          { title: "Tweet Scraper V2",              description: "Scrapes tweets by search term, handle, URL, or list.",               platforms: ["Twitter"],    estItems: 50 },
+      "apify~instagram-scraper":        { title: "Instagram Scraper",             description: "Scrapes Instagram profiles, posts, comments, and hashtags.",          platforms: ["Instagram"],  estItems: 20 },
+      "streamers~youtube-scraper":      { title: "YouTube Scraper",               description: "Scrapes YouTube videos, channels, and search results without quota.", platforms: ["YouTube"],    estItems: 20 },
+      "clockworks~tiktok-scraper":      { title: "TikTok Scraper",                description: "Scrapes TikTok by profile, hashtag, search, or video URL.",           platforms: ["TikTok"],    estItems: 20 },
+      "apimaestro~linkedin-profile-batch-scraper-no-cookies-required": { title: "LinkedIn Profile Batch Scraper", description: "Scrapes LinkedIn profiles in bulk by URL — no cookies required.", platforms: ["LinkedIn"], estItems: 10 },
+      "harvestapi~linkedin-profile-search":          { title: "LinkedIn Profile Search",    description: "Search LinkedIn profiles by company, title, and location.",  platforms: ["LinkedIn"],  estItems: 10 },
+      "harvestapi~linkedin-company-employees":       { title: "LinkedIn Company Employees", description: "Scrapes employee lists from LinkedIn company pages.",          platforms: ["LinkedIn"],  estItems: 10 },
+      "apimaestro~linkedin-posts-search-scraper-no-cookies": { title: "LinkedIn Posts Search", description: "Searches and scrapes LinkedIn posts by keyword.",         platforms: ["LinkedIn"],  estItems: 10 },
+      "junglee~amazon-crawler":         { title: "Amazon Product Scraper",        description: "Scrapes Amazon product data by category, search, or product URL.",    platforms: ["Amazon"],    estItems: 20 },
+      "compass~crawler-google-places":  { title: "Google Maps Scraper",           description: "Scrapes Google Maps places — beyond the 60-result official API cap.", platforms: ["Google Maps"], estItems: 50 },
+    };
+
+    // Mirrors DEMO_QUERY_CHAINS in actor_registry.py exactly
+    const DEMO_QUERY_CHAINS_JS = {
+      ai_startups_sf:           ["apify~google-search-scraper", "apimaestro~linkedin-profile-batch-scraper-no-cookies-required", "trudax~reddit-scraper-lite"],
+      reddit_twitter_sentiment: ["trudax~reddit-scraper-lite", "apidojo~tweet-scraper"],
+      fintech_lead_gen:         ["compass~crawler-google-places", "harvestapi~linkedin-company-employees"],
+    };
+
+    // Mirrors _PLATFORM_ACTOR_MAP in actor_registry.py (priority order, first match wins)
+    const PLATFORM_ACTOR_MAP_JS = [
+      { aliases: ["reddit"],                         actorId: "trudax~reddit-scraper-lite" },
+      { aliases: ["twitter", " x "],                 actorId: "apidojo~tweet-scraper" },
+      { aliases: ["instagram"],                      actorId: "apify~instagram-scraper" },
+      { aliases: ["youtube"],                        actorId: "streamers~youtube-scraper" },
+      { aliases: ["tiktok"],                         actorId: "clockworks~tiktok-scraper" },
+      { aliases: ["linkedin"],                       actorId: "apimaestro~linkedin-profile-batch-scraper-no-cookies-required" },
+      { aliases: ["google maps", "maps", "places"],  actorId: "compass~crawler-google-places" },
+      { aliases: ["amazon"],                         actorId: "junglee~amazon-crawler" },
+      { aliases: ["google", "serp"],                 actorId: "apify~google-search-scraper" },
+      { aliases: ["web"],                            actorId: "apify~website-content-crawler" },
+    ];
+
     // ── Helpers ──────────────────────────────────────────────────────────────────
 
     function actorDisplayName(actorId) {
@@ -141,6 +182,31 @@
         .split("-")
         .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
         .join(" ");
+    }
+
+    // JS port of classify_demo_query() + get_chain_for_query() from actor_registry.py.
+    // Returns array of actor_id strings; empty array = Tier 2 (show dynamic message).
+    function predictActorChain(query) {
+      const q = query.toLowerCase();
+      if (q.includes("linkedin") && (q.includes("startup") || q.includes("founder")) &&
+          (q.includes("reddit") || q.includes(" sf") || q.includes("san francisco")))
+        return DEMO_QUERY_CHAINS_JS.ai_startups_sf;
+      if (q.includes("reddit") && (q.includes("twitter") || q.includes(" x ") || q.includes("tweet")))
+        return DEMO_QUERY_CHAINS_JS.reddit_twitter_sentiment;
+      if (q.includes("linkedin") && (q.includes("lead") || q.includes("fintech") ||
+          q.includes("google maps") || q.includes("decision maker")))
+        return DEMO_QUERY_CHAINS_JS.fintech_lead_gen;
+      const chain = [];
+      for (const { aliases, actorId } of PLATFORM_ACTOR_MAP_JS) {
+        if (aliases.some((a) => q.includes(a)) && !chain.includes(actorId))
+          chain.push(actorId);
+      }
+      return chain;
+    }
+
+    // actor_id → https://apify.com/username/actor-name
+    function apifyUrl(actorId) {
+      return `https://apify.com/${actorId.replace("~", "/")}`;
     }
 
     // ── Small components ─────────────────────────────────────────────────────────
@@ -195,6 +261,75 @@
         return [text.slice(0, hrIdx).trimEnd(), text.slice(hrIdx + 1)];
       }
       return [text, null];
+    }
+
+    // ── Actor discovery panel (Phase 1) ──────────────────────────────────────────
+
+    function ActorDiscoveryPanel({ actors, onConfirm, onManual }) {
+      return (
+        <div className="mt-8 space-y-5 fade-up">
+          <SectionLabel>Recommended Actors</SectionLabel>
+
+          {actors.length > 0 ? (
+            <div className="space-y-3">
+              {actors.map((actorId) => {
+                const meta = ACTOR_REGISTRY_FRONTEND[actorId] || {
+                  title: actorDisplayName(actorId),
+                  description: "",
+                  platforms: [],
+                  estItems: 0,
+                };
+                return (
+                  <div key={actorId} className="card px-5 py-4">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <span className="font-semibold text-sm text-zinc-100">{meta.title}</span>
+                          {meta.platforms[0] && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-800 text-zinc-300 border border-zinc-700">
+                              {meta.platforms[0]}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-zinc-400 leading-relaxed">{meta.description}</p>
+                        <div className="text-xs font-mono text-zinc-600 mt-1">{actorId}</div>
+                      </div>
+                      {meta.estItems > 0 && (
+                        <div className="flex-shrink-0 text-xs text-zinc-500 whitespace-nowrap mt-0.5">
+                          ~{meta.estItems} items
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="card px-5 py-4">
+              <p className="text-sm text-zinc-400 leading-relaxed">
+                We'll discover the best actors dynamically from{" "}
+                <span className="text-zinc-300 font-medium">33,000+ available</span>{" "}
+                for this specific request.
+              </p>
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <button
+              onClick={onConfirm}
+              className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 transition-all duration-150"
+            >
+              Run these actors for me
+            </button>
+            <button
+              onClick={onManual}
+              className="flex-1 py-2.5 rounded-xl font-semibold text-sm bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition-all duration-150"
+            >
+              I'll use these myself ↗
+            </button>
+          </div>
+        </div>
+      );
     }
 
     // ── Step card ────────────────────────────────────────────────────────────────
@@ -270,6 +405,7 @@
     // ── Result panel ─────────────────────────────────────────────────────────────
 
     function ResultPanel({ data }) {
+      const [showSummary, setShowSummary] = React.useState(false);
       return (
         <div className="mt-8 space-y-8 fade-up">
 
@@ -314,31 +450,40 @@
             </div>
           </div>
 
-          {/* Final Answer — split into Raw Data + Agent Insights */}
-          <div>
-            <SectionLabel>Synthesized Output</SectionLabel>
-            {(() => {
-              const parts = splitFinalAnswer(data.final_answer);
-              return (
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-widest text-zinc-600 mb-2">Raw Data Output</p>
-                    <div className="card px-8 py-7">
-                      <MarkdownBlock content={parts[0]} />
-                    </div>
-                  </div>
-                  {parts[1] && (
+          {/* Generate AI Summary button / Synthesized Output */}
+          {!showSummary ? (
+            <button
+              onClick={() => setShowSummary(true)}
+              className="w-full py-3 rounded-xl font-semibold text-sm bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition-all duration-150"
+            >
+              Generate AI Summary ▼
+            </button>
+          ) : (
+            <div>
+              <SectionLabel>Synthesized Output</SectionLabel>
+              {(() => {
+                const parts = splitFinalAnswer(data.final_answer);
+                return (
+                  <div className="space-y-4">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-widest text-zinc-600 mb-2">Agent Insights</p>
-                      <div className="card px-8 py-7" style={{ borderLeft: "2px solid #6366f1" }}>
-                        <MarkdownBlock content={parts[1]} />
+                      <p className="text-xs font-semibold uppercase tracking-widest text-zinc-600 mb-2">Raw Data Output</p>
+                      <div className="card px-8 py-7">
+                        <MarkdownBlock content={parts[0]} />
                       </div>
                     </div>
-                  )}
-                </div>
-              );
-            })()}
-          </div>
+                    {parts[1] && (
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-widest text-zinc-600 mb-2">Agent Insights</p>
+                        <div className="card px-8 py-7" style={{ borderLeft: "2px solid #6366f1" }}>
+                          <MarkdownBlock content={parts[1]} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
 
         </div>
       );
@@ -391,11 +536,14 @@
     // ── Main app ─────────────────────────────────────────────────────────────────
 
     function App() {
-      const [query,       setQuery]       = React.useState("");
-      const [loading,     setLoading]     = React.useState(false);
-      const [msgIndex,    setMsgIndex]    = React.useState(0);
-      const [result,      setResult]      = React.useState(null);
-      const [error,       setError]       = React.useState(null);
+      const [query,           setQuery]           = React.useState("");
+      const [loading,         setLoading]         = React.useState(false);
+      const [msgIndex,        setMsgIndex]        = React.useState(0);
+      const [result,          setResult]          = React.useState(null);
+      const [error,           setError]           = React.useState(null);
+      const [phase,           setPhase]           = React.useState("idle");
+      // "idle" | "discovery" | "running" | "results"
+      const [predictedActors, setPredictedActors] = React.useState([]);
 
       // Cycle loading messages every 3 seconds while loading
       React.useEffect(() => {
@@ -407,33 +555,52 @@
         return () => clearInterval(id);
       }, [loading]);
 
+      // Phase 1: compute predicted actors and show discovery panel
       async function handleSubmit(e) {
         e.preventDefault();
         const q = query.trim();
         if (!q) return;
-        setLoading(true);
+        setPredictedActors(predictActorChain(q));
+        setPhase("discovery");
         setResult(null);
+        setError(null);
+      }
+
+      // Phase 2: user confirmed — run /orchestrate
+      async function handleConfirmRun() {
+        setPhase("running");
+        setLoading(true);
         setError(null);
         try {
           const res = await fetch(`${API_BASE}/orchestrate`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_query: q }),
+            body: JSON.stringify({ user_query: query }),
           });
           const json = await res.json();
           if (!res.ok) setError(json.detail ?? `HTTP ${res.status}`);
-          else setResult(json);
+          else { setResult(json); setPhase("results"); }
         } catch (err) {
           setError(err.message ?? "Network error — is the server running on :8000?");
+          setPhase("discovery");
         } finally {
           setLoading(false);
         }
+      }
+
+      // "I'll use these myself" — open each actor on Apify in a new tab
+      function handleManual() {
+        if (predictedActors.length > 0)
+          predictedActors.forEach((id) => window.open(apifyUrl(id), "_blank"));
+        else
+          window.open("https://apify.com/store", "_blank");
       }
 
       function fillDemo(q) {
         setQuery(q);
         setResult(null);
         setError(null);
+        setPhase("idle");
       }
 
       const isMock = result && result.mock_mode;
@@ -464,8 +631,7 @@
                 <span className="gradient-text">Apify Actor Orchestrator</span>
               </h1>
               <p className="text-zinc-500 text-sm max-w-lg leading-relaxed">
-                Natural language &rarr; Actor selection &rarr; Chained execution &rarr; Synthesized answer.
-                Powered by Claude and 33,000+ Apify Actors.
+                33,000+ Actors available — describe what data you need and we'll find the right ones for you.
               </p>
             </div>
 
@@ -509,6 +675,15 @@
                 <span className="text-xs text-zinc-700 whitespace-nowrap select-none">⌘ Enter</span>
               </div>
             </form>
+
+            {/* Phase 1: Actor discovery */}
+            {phase === "discovery" && (
+              <ActorDiscoveryPanel
+                actors={predictedActors}
+                onConfirm={handleConfirmRun}
+                onManual={handleManual}
+              />
+            )}
 
             {/* Loading */}
             {loading && <LoadingView msgIndex={msgIndex} />}
