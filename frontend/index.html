@@ -4,127 +4,116 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Apify Actor Orchestrator</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #09090b;
+      color: #fafafa;
+    }
+
+    /* ── Markdown prose ─────────────────────────────────────────── */
+    .prose { color: #d4d4d8; line-height: 1.75; font-size: 0.9rem; }
+    .prose h1 { font-size: 1.3rem; font-weight: 700; color: #fafafa; margin: 1.5rem 0 0.6rem; }
+    .prose h2 { font-size: 1.15rem; font-weight: 700; color: #fafafa; margin: 1.5rem 0 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #27272a; }
+    .prose h3 { font-size: 1rem; font-weight: 600; color: #e4e4e7; margin: 1.25rem 0 0.35rem; }
+    .prose p { margin: 0.6rem 0; }
+    .prose ul { margin: 0.5rem 0 0.75rem 1.4rem; list-style: disc; }
+    .prose ol { margin: 0.5rem 0 0.75rem 1.4rem; list-style: decimal; }
+    .prose li { margin: 0.3rem 0; line-height: 1.65; }
+    .prose strong { color: #fafafa; font-weight: 600; }
+    .prose em { color: #a1a1aa; }
+    .prose hr { border: none; border-top: 1px solid #27272a; margin: 1.5rem 0; }
+    .prose a { color: #818cf8; text-decoration: underline; text-underline-offset: 2px; }
+    .prose a:hover { color: #a5b4fc; }
+    .prose code { background: #27272a; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.82em; color: #e4e4e7; font-family: 'SF Mono', 'Fira Code', monospace; }
+    .prose pre { background: #0d0d0f; border: 1px solid #27272a; border-radius: 8px; padding: 1rem; overflow-x: auto; margin: 0.75rem 0; }
+    .prose pre code { background: none; padding: 0; font-size: 0.82rem; }
+    .prose blockquote { border-left: 2px solid #4f46e5; padding-left: 1rem; color: #a1a1aa; margin: 0.75rem 0; }
+    .prose table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85rem; }
+    .prose thead th { text-align: left; padding: 0.5rem 0.875rem; background: #18181b; color: #f4f4f5; font-weight: 600; border-bottom: 1px solid #3f3f46; }
+    .prose tbody td { padding: 0.5rem 0.875rem; border-bottom: 1px solid #27272a; color: #d4d4d8; vertical-align: top; }
+    .prose tbody tr:last-child td { border-bottom: none; }
+    .prose tbody tr:hover td { background: rgba(255,255,255,0.02); }
+
+    /* ── Animations ─────────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp 0.3s ease-out forwards; }
+
+    @keyframes rotateSpin { to { transform: rotate(360deg); } }
+    .spinner { animation: rotateSpin 0.9s linear infinite; }
+
+    @keyframes msgFade {
+      0%   { opacity: 0; transform: translateY(4px); }
+      15%  { opacity: 1; transform: translateY(0); }
+      85%  { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-4px); }
+    }
+    .msg-fade { animation: msgFade 3s ease-in-out forwards; }
+
+    /* ── Cards ──────────────────────────────────────────────────── */
+    .card {
+      background: #18181b;
+      border: 1px solid #27272a;
+      border-radius: 12px;
+      transition: border-color 0.15s;
+    }
+    .card:hover { border-color: #3f3f46; }
+
+    /* ── Gradient text ──────────────────────────────────────────── */
+    .gradient-text {
+      background: linear-gradient(135deg, #818cf8 0%, #c084fc 60%, #e879f9 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Step connector ─────────────────────────────────────────── */
+    .step-connector {
+      width: 1px;
+      height: 20px;
+      background: linear-gradient(to bottom, rgba(99,102,241,0.5), transparent);
+      margin-left: 35px;
+    }
+
+    /* ── Scrollbar ──────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
+  </style>
 </head>
-<body class="bg-gray-950 text-gray-100 min-h-screen">
+<body>
   <div id="root"></div>
 
   <script type="text/babel">
+
     const API_BASE = "http://localhost:8000";
 
-    // ── Small reusable components ──────────────────────────────────────────────
+    // Configure marked once at module level
+    marked.use({ breaks: true, gfm: true });
 
-    function Badge({ children, color = "gray" }) {
-      const colors = {
-        gray:   "bg-gray-700 text-gray-200",
-        green:  "bg-green-800 text-green-200",
-        red:    "bg-red-800 text-red-200",
-        yellow: "bg-yellow-800 text-yellow-200",
-        blue:   "bg-blue-800 text-blue-200",
-      };
-      return (
-        <span className={`inline-block px-2 py-0.5 rounded text-xs font-mono font-semibold ${colors[color]}`}>
-          {children}
-        </span>
-      );
-    }
+    // ── Constants ────────────────────────────────────────────────────────────────
 
-    function StatusBadge({ status }) {
-      const map = {
-        SUCCEEDED: "green",
-        FAILED:    "red",
-        TIMED_OUT: "red",
-        ABORTED:   "red",
-        RUNNING:   "yellow",
-        READY:     "blue",
-      };
-      return <Badge color={map[status] ?? "gray"}>{status}</Badge>;
-    }
-
-    function StepCard({ step }) {
-      const result = step.result;
-      return (
-        <div className="border border-gray-700 rounded-lg p-4 space-y-2">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="font-mono text-xs text-gray-400">#{step.step_number}</span>
-            <span className="font-semibold text-sm text-white">{step.actor_id}</span>
-            {result && <StatusBadge status={result.status} />}
-            {result && (
-              <span className="text-xs text-gray-400">
-                {result.item_count} item{result.item_count !== 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
-          <p className="text-sm text-gray-300">{step.description}</p>
-          {result?.error_message && (
-            <p className="text-xs text-red-400 font-mono">{result.error_message}</p>
-          )}
-          {result?.items?.length > 0 && (
-            <details className="mt-1">
-              <summary className="cursor-pointer text-xs text-gray-400 hover:text-gray-200">
-                Preview top {Math.min(3, result.items.length)} item{result.items.length !== 1 ? "s" : ""}
-              </summary>
-              <pre className="mt-2 text-xs bg-gray-900 rounded p-3 overflow-x-auto text-gray-300 max-h-60">
-                {JSON.stringify(result.items.slice(0, 3), null, 2)}
-              </pre>
-            </details>
-          )}
-        </div>
-      );
-    }
-
-    function ResultPanel({ data }) {
-      return (
-        <div className="space-y-6 mt-6">
-
-          {/* Summary bar */}
-          <div className="flex flex-wrap gap-3 items-center text-sm">
-            <Badge color="blue">
-              {data.iterations_used} / 5 iterations
-            </Badge>
-            <Badge color="blue">
-              {data.total_items_collected} items collected
-            </Badge>
-            <Badge color={data.mock_mode ? "yellow" : "green"}>
-              {data.mock_mode ? "MOCK MODE" : "LIVE"}
-            </Badge>
-          </div>
-
-          {/* Final answer */}
-          <div className="bg-gray-800 rounded-xl p-5 space-y-2">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400">
-              Answer
-            </h2>
-            <p className="text-gray-100 leading-relaxed whitespace-pre-wrap">
-              {data.final_answer}
-            </p>
-          </div>
-
-          {/* Plan reasoning */}
-          <div className="bg-gray-800 rounded-xl p-5 space-y-2">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400">
-              Plan reasoning
-            </h2>
-            <p className="text-sm text-gray-300">{data.plan.reasoning}</p>
-          </div>
-
-          {/* Steps */}
-          <div className="space-y-3">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400">
-              Steps executed ({data.steps_executed.length})
-            </h2>
-            {data.steps_executed.map((step) => (
-              <StepCard key={step.step_number} step={step} />
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    // ── Demo query buttons ─────────────────────────────────────────────────────
+    const LOADING_MSGS = [
+      "Parsing your request…",
+      "Selecting the right Actors…",
+      "Running scrapers…",
+      "Synthesizing results…",
+    ];
 
     const DEMO_QUERIES = [
       "Find me the top AI startups in SF, their founders' LinkedIn profiles, and what people are saying about them on Reddit",
@@ -132,13 +121,252 @@
       "Build me a lead list of fintech companies in NYC — find them on Google Maps, then find their decision makers on LinkedIn",
     ];
 
-    // ── Main app ───────────────────────────────────────────────────────────────
+    const STATUS_CFG = {
+      SUCCEEDED: { cls: "bg-emerald-900/40 text-emerald-300 border border-emerald-800/60",  dot: "bg-emerald-400" },
+      FAILED:    { cls: "bg-rose-900/40 text-rose-300 border border-rose-800/60",           dot: "bg-rose-400"    },
+      TIMED_OUT: { cls: "bg-rose-900/40 text-rose-300 border border-rose-800/60",           dot: "bg-rose-400"    },
+      ABORTED:   { cls: "bg-rose-900/40 text-rose-300 border border-rose-800/60",           dot: "bg-rose-400"    },
+      RUNNING:   { cls: "bg-amber-900/40 text-amber-300 border border-amber-800/60",        dot: "bg-amber-400"   },
+      READY:     { cls: "bg-blue-900/40 text-blue-300 border border-blue-800/60",           dot: "bg-blue-400"    },
+    };
+
+    // ── Helpers ──────────────────────────────────────────────────────────────────
+
+    function actorDisplayName(actorId) {
+      const slug = actorId.includes("~") ? actorId.split("~")[1] : actorId;
+      return slug
+        .split("-")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(" ");
+    }
+
+    // ── Small components ─────────────────────────────────────────────────────────
+
+    function SectionLabel({ children }) {
+      return (
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-xs font-semibold uppercase tracking-widest text-zinc-500 whitespace-nowrap">
+            {children}
+          </span>
+          <div className="flex-1 h-px bg-zinc-800" />
+        </div>
+      );
+    }
+
+    function StatusBadge({ status }) {
+      const cfg = STATUS_CFG[status] || STATUS_CFG.FAILED;
+      return (
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${cfg.cls}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+          {status}
+        </span>
+      );
+    }
+
+    function MarkdownBlock({ content }) {
+      const html = React.useMemo(() => {
+        try { return marked.parse(content); }
+        catch (_) { return "<p>" + content + "</p>"; }
+      }, [content]);
+      return (
+        <div
+          className="prose"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      );
+    }
+
+    // ── Step card ────────────────────────────────────────────────────────────────
+
+    function StepCard({ step, index, isLast }) {
+      const result = step.result;
+      const statusKey = result ? result.status : null;
+
+      return (
+        <div>
+          <div
+            className="card p-5 fade-up"
+            style={{ animationDelay: index * 0.06 + "s", opacity: 0 }}
+          >
+            <div className="flex items-start gap-4">
+              {/* Step number bubble */}
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-600/15 border border-indigo-500/30 flex items-center justify-center mt-0.5">
+                <span className="text-xs font-bold text-indigo-400">{step.step_number}</span>
+              </div>
+
+              <div className="flex-1 min-w-0">
+                {/* Actor display name */}
+                <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                  <span className="text-base font-semibold text-zinc-100 leading-tight">
+                    {actorDisplayName(step.actor_id)}
+                  </span>
+                  {statusKey && <StatusBadge status={statusKey} />}
+                  {result && result.item_count > 0 && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-800 text-zinc-300 border border-zinc-700">
+                      {result.item_count} item{result.item_count !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                </div>
+
+                {/* Actor ID monospace */}
+                <div className="text-xs font-mono text-zinc-600 mb-2">{step.actor_id}</div>
+
+                {/* Description */}
+                <p className="text-sm text-zinc-400 leading-relaxed">{step.description}</p>
+
+                {/* Error */}
+                {result && result.error_message && (
+                  <p className="mt-2 text-xs font-mono text-rose-400">{result.error_message}</p>
+                )}
+
+                {/* Preview */}
+                {result && result.items && result.items.length > 0 && (
+                  <details className="mt-3 group">
+                    <summary className="cursor-pointer select-none inline-flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+                      <svg
+                        className="w-3 h-3 transition-transform group-open:rotate-90"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                      Preview {Math.min(2, result.items.length)} result{result.items.length !== 1 ? "s" : ""}
+                    </summary>
+                    <pre className="mt-2 text-xs rounded-lg p-3 overflow-x-auto text-zinc-400 max-h-52 border border-zinc-800" style={{ background: '#0d0d0f' }}>
+                      {JSON.stringify(result.items.slice(0, 2), null, 2)}
+                    </pre>
+                  </details>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Connector between steps */}
+          {!isLast && <div className="step-connector" />}
+        </div>
+      );
+    }
+
+    // ── Result panel ─────────────────────────────────────────────────────────────
+
+    function ResultPanel({ data }) {
+      return (
+        <div className="mt-8 space-y-8 fade-up">
+
+          {/* Stats strip */}
+          <div className="flex flex-wrap gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-zinc-800/80 text-zinc-300 border border-zinc-700">
+              <svg className="w-3 h-3 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+              </svg>
+              {data.iterations_used} / 5 iterations
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-zinc-800/80 text-zinc-300 border border-zinc-700">
+              <svg className="w-3 h-3 text-indigo-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+              </svg>
+              {data.total_items_collected} items collected
+            </span>
+          </div>
+
+          {/* Agent Reasoning */}
+          <div>
+            <SectionLabel>Agent Reasoning</SectionLabel>
+            <div className="card px-5 py-4">
+              <p className="text-sm text-zinc-300 leading-relaxed">{data.plan.reasoning}</p>
+            </div>
+          </div>
+
+          {/* Execution Pipeline */}
+          <div>
+            <SectionLabel>
+              Execution Pipeline &mdash; {data.steps_executed.length} Actor{data.steps_executed.length !== 1 ? "s" : ""} Chained
+            </SectionLabel>
+            <div>
+              {data.steps_executed.map((step, i) => (
+                <StepCard
+                  key={step.step_number}
+                  step={step}
+                  index={i}
+                  isLast={i === data.steps_executed.length - 1}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Final Answer */}
+          <div>
+            <SectionLabel>Analysis</SectionLabel>
+            <div className="card px-6 py-5">
+              <MarkdownBlock content={data.final_answer} />
+            </div>
+          </div>
+
+        </div>
+      );
+    }
+
+    // ── Loading state ────────────────────────────────────────────────────────────
+
+    function LoadingView({ msgIndex }) {
+      return (
+        <div className="mt-12 flex flex-col items-center gap-6 py-6">
+          {/* Ring spinner */}
+          <div className="relative w-11 h-11">
+            <div className="absolute inset-0 rounded-full border-2 border-zinc-800" />
+            <svg className="absolute inset-0 w-11 h-11 spinner" viewBox="0 0 44 44" fill="none">
+              <circle cx="22" cy="22" r="19" stroke="url(#spinGrad)" strokeWidth="2" strokeLinecap="round" strokeDasharray="80 40" />
+              <defs>
+                <linearGradient id="spinGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#6366f1" />
+                  <stop offset="100%" stopColor="#a855f7" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+
+          {/* Cycling message */}
+          <div className="text-center space-y-1 min-h-[3rem]">
+            <p
+              key={msgIndex}
+              className="text-sm font-medium text-zinc-200 msg-fade"
+            >
+              {LOADING_MSGS[msgIndex]}
+            </p>
+            <p className="text-xs text-zinc-600">Step {msgIndex + 1} of {LOADING_MSGS.length}</p>
+          </div>
+
+          {/* Progress dots */}
+          <div className="flex gap-2">
+            {LOADING_MSGS.map((_, i) => (
+              <div
+                key={i}
+                className="w-1.5 h-1.5 rounded-full transition-all duration-500"
+                style={{ background: i <= msgIndex ? '#6366f1' : '#27272a' }}
+              />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ── Main app ─────────────────────────────────────────────────────────────────
 
     function App() {
-      const [query, setQuery]     = React.useState("");
-      const [loading, setLoading] = React.useState(false);
-      const [result, setResult]   = React.useState(null);
-      const [error, setError]     = React.useState(null);
+      const [query,       setQuery]       = React.useState("");
+      const [loading,     setLoading]     = React.useState(false);
+      const [msgIndex,    setMsgIndex]    = React.useState(0);
+      const [result,      setResult]      = React.useState(null);
+      const [error,       setError]       = React.useState(null);
+
+      // Cycle loading messages every 3 seconds while loading
+      React.useEffect(() => {
+        if (!loading) { setMsgIndex(0); return; }
+        const id = setInterval(
+          () => setMsgIndex((s) => (s + 1) % LOADING_MSGS.length),
+          3000
+        );
+        return () => clearInterval(id);
+      }, [loading]);
 
       async function handleSubmit(e) {
         e.preventDefault();
@@ -154,13 +382,10 @@
             body: JSON.stringify({ user_query: q }),
           });
           const json = await res.json();
-          if (!res.ok) {
-            setError(json.detail ?? `HTTP ${res.status}`);
-          } else {
-            setResult(json);
-          }
+          if (!res.ok) setError(json.detail ?? `HTTP ${res.status}`);
+          else setResult(json);
         } catch (err) {
-          setError(err.message ?? "Network error — is the server running?");
+          setError(err.message ?? "Network error — is the server running on :8000?");
         } finally {
           setLoading(false);
         }
@@ -172,78 +397,97 @@
         setError(null);
       }
 
+      const isMock = result && result.mock_mode;
+
       return (
-        <div className="max-w-3xl mx-auto px-4 py-12 space-y-8">
+        <div className="min-h-screen" style={{ background: '#09090b' }}>
 
-          {/* Header */}
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight text-white">
-              Apify Actor Orchestrator
-            </h1>
-            <p className="text-sm text-gray-400">
-              Ask a question — the agent selects and chains the right Apify actors automatically.
-            </p>
-          </div>
-
-          {/* Demo query pills */}
-          <div className="space-y-2">
-            <p className="text-xs text-gray-500 uppercase tracking-widest">Demo queries</p>
-            <div className="flex flex-col gap-2">
-              {DEMO_QUERIES.map((q) => (
-                <button
-                  key={q}
-                  onClick={() => fillDemo(q)}
-                  className="text-left text-sm text-blue-300 hover:text-blue-100 bg-gray-800 hover:bg-gray-700 rounded-lg px-4 py-2 transition-colors"
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Input form */}
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <textarea
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              rows={3}
-              placeholder="Ask anything — e.g. 'What are people saying about OpenAI on Reddit this week?'"
-              className="w-full bg-gray-800 border border-gray-600 rounded-xl px-4 py-3 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSubmit(e);
-              }}
-            />
-            <button
-              type="submit"
-              disabled={loading || !query.trim()}
-              className="w-full py-2.5 rounded-xl font-semibold text-sm bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          {/* Mock Mode banner — shown once result confirms mock_mode=true */}
+          {isMock && (
+            <div
+              className="w-full px-4 py-2.5 flex items-center justify-center gap-2 border-b"
+              style={{ background: 'rgba(234,179,8,0.07)', borderColor: 'rgba(234,179,8,0.18)' }}
             >
-              {loading ? "Running agent…" : "Run"}
-            </button>
-            <p className="text-xs text-gray-500 text-right">Cmd/Ctrl+Enter to submit</p>
-          </form>
-
-          {/* Loading spinner */}
-          {loading && (
-            <div className="flex items-center gap-3 text-sm text-gray-400">
-              <svg className="animate-spin h-4 w-4 text-blue-400" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+              <svg className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
-              Parsing → planning → executing → synthesizing…
+              <span className="text-xs font-semibold text-amber-400 tracking-wide">
+                MOCK MODE &mdash; Using fixture data. No Apify credits consumed.
+              </span>
             </div>
           )}
 
-          {/* Error */}
-          {error && (
-            <div className="bg-red-900/40 border border-red-700 rounded-xl px-4 py-3 text-sm text-red-300">
-              {error}
+          <div className="max-w-3xl mx-auto px-4 py-12">
+
+            {/* Header */}
+            <div className="mb-10">
+              <h1 className="text-3xl font-extrabold tracking-tight mb-2">
+                <span className="gradient-text">Apify Actor Orchestrator</span>
+              </h1>
+              <p className="text-zinc-500 text-sm max-w-lg leading-relaxed">
+                Natural language &rarr; Actor selection &rarr; Chained execution &rarr; Synthesized answer.
+                Powered by Claude and 33,000+ Apify Actors.
+              </p>
             </div>
-          )}
 
-          {/* Result */}
-          {result && <ResultPanel data={result} />}
+            {/* Demo queries */}
+            <div className="mb-7">
+              <p className="text-xs font-semibold uppercase tracking-widest text-zinc-600 mb-2.5">
+                Try a demo query
+              </p>
+              <div className="flex flex-col gap-1.5">
+                {DEMO_QUERIES.map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => fillDemo(q)}
+                    className="text-left text-sm text-zinc-400 hover:text-zinc-100 bg-zinc-900 hover:bg-zinc-800/80 border border-zinc-800 hover:border-zinc-700 rounded-xl px-4 py-2.5 transition-all duration-150"
+                  >
+                    <span className="text-indigo-500 mr-2 font-medium">&rarr;</span>
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
 
+            {/* Input form */}
+            <form onSubmit={handleSubmit} className="space-y-2.5">
+              <textarea
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                rows={3}
+                placeholder="Ask anything — e.g. 'What are people saying about OpenAI on Reddit this week?'"
+                className="w-full bg-zinc-900 border border-zinc-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 rounded-xl px-4 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none resize-none transition-all duration-150"
+                onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSubmit(e); }}
+              />
+              <div className="flex items-center gap-3">
+                <button
+                  type="submit"
+                  disabled={loading || !query.trim()}
+                  className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150"
+                >
+                  {loading ? "Running…" : "Run Agent"}
+                </button>
+                <span className="text-xs text-zinc-700 whitespace-nowrap select-none">⌘ Enter</span>
+              </div>
+            </form>
+
+            {/* Loading */}
+            {loading && <LoadingView msgIndex={msgIndex} />}
+
+            {/* Error */}
+            {error && (
+              <div className="mt-6 card px-4 py-3 flex items-start gap-3" style={{ borderColor: 'rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.05)' }}>
+                <svg className="w-4 h-4 text-rose-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <p className="text-sm text-rose-300">{error}</p>
+              </div>
+            )}
+
+            {/* Results */}
+            {result && <ResultPanel data={result} />}
+
+          </div>
         </div>
       );
     }
