@@ -101,7 +101,10 @@
 
   <script type="text/babel">
 
-    const API_BASE = "http://localhost:8000";
+    // Empty string = relative paths, works on Railway and locally via uvicorn.
+    // If opening index.html directly as a file (not through uvicorn), change to
+    // "http://localhost:8000" temporarily.
+    const API_BASE = "";
 
     // Configure marked once at module level
     marked.use({ breaks: true, gfm: true });
@@ -174,6 +177,24 @@
           dangerouslySetInnerHTML={{ __html: html }}
         />
       );
+    }
+
+    // Split final_answer at the first heading containing an observations/insights/
+    // next-steps keyword. Falls back to the last horizontal rule. Returns [part1, part2]
+    // where part2 may be null if no split point is found.
+    function splitFinalAnswer(text) {
+      const match = text.match(
+        /^(#{1,4}[^\n]*(?:Key Observations|Observations|Insights|Next Steps|Recommendations|Bottom Line|Takeaway)[^\n]*)/mi
+      );
+      if (match) {
+        const idx = text.indexOf(match[0]);
+        return [text.slice(0, idx).trimEnd(), text.slice(idx)];
+      }
+      const hrIdx = text.lastIndexOf("\n---\n");
+      if (hrIdx !== -1) {
+        return [text.slice(0, hrIdx).trimEnd(), text.slice(hrIdx + 1)];
+      }
+      return [text, null];
     }
 
     // ── Step card ────────────────────────────────────────────────────────────────
@@ -293,12 +314,30 @@
             </div>
           </div>
 
-          {/* Final Answer */}
+          {/* Final Answer — split into Raw Data + Agent Insights */}
           <div>
-            <SectionLabel>Analysis</SectionLabel>
-            <div className="card px-6 py-5">
-              <MarkdownBlock content={data.final_answer} />
-            </div>
+            <SectionLabel>Synthesized Output</SectionLabel>
+            {(() => {
+              const parts = splitFinalAnswer(data.final_answer);
+              return (
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-zinc-600 mb-2">Raw Data Output</p>
+                    <div className="card px-8 py-7">
+                      <MarkdownBlock content={parts[0]} />
+                    </div>
+                  </div>
+                  {parts[1] && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-widest text-zinc-600 mb-2">Agent Insights</p>
+                      <div className="card px-8 py-7" style={{ borderLeft: "2px solid #6366f1" }}>
+                        <MarkdownBlock content={parts[1]} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
         </div>

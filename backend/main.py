@@ -5,6 +5,7 @@ import os
 import anthropic
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 from backend.agent import OrchestratorAgent
 from backend.apify_client import ApifyClientWrapper
@@ -38,6 +39,18 @@ _claude = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
 
 # ── Routes ─────────────────────────────────────────────────────────────────────
+
+
+@app.get("/")
+def serve_frontend() -> FileResponse:
+    """
+    Serve the single-page frontend. Required for Railway (and any deployment where
+    the frontend is not opened as a local file).
+
+    # Example input:  GET /
+    # Example output: HTTP 200 with frontend/index.html body
+    """
+    return FileResponse("frontend/index.html")
 
 
 @app.get("/health")
