@@ -4,7 +4,7 @@
 
 **[https://apify-orchestrator.up.railway.app](https://apify-orchestrator.up.railway.app)**
 
-> Running in MOCK MODE after day of hackathon - no Apify credits consumed. Try the 3 demo queries below.
+> Running in MOCK MODE after day of hackathon - no Apify credits consumed thereafter. Try the 3 demo queries below.
 
 ---
 
